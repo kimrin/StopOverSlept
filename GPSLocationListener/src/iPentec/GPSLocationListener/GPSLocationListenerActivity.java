@@ -1,5 +1,9 @@
 package iPentec.GPSLocationListener;
  
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.location.*;
@@ -17,7 +21,6 @@ public class GPSLocationListenerActivity extends Activity implements LocationLis
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gpslocation_listener);
-         
         locman = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
    }
      
@@ -45,9 +48,29 @@ public class GPSLocationListenerActivity extends Activity implements LocationLis
         textView1.setText("Latitude:Longitude - "
         +String.valueOf(location.getLatitude()) +":"+String.valueOf(location.getLongitude()));
          
-        TextView textView2 = (TextView)findViewById(R.id.textView2);
-        textView2.setText(String.valueOf(location.getTime()));
-                 
+        TextView textView5 = (TextView)findViewById(R.id.textView5);
+                         
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        
+        try{
+        	boolean b = false;
+          List<Address> addressList = geocoder.getFromLocationName("東京都渋谷区神南２丁目２－１", 1);
+          if (addressList.size() == 0) {
+        	  textView5.setText("見つかりませんでした");
+        	  b = true;
+          }
+          if (!b) {
+        	  Address address = addressList.get(0);
+ 
+        	  double lat = address.getLatitude();
+        	  double lng = address.getLongitude();
+        	  String adr=Double.toString(lat)+","+Double.toString(lng);
+        	  textView5.setText(adr);
+          }
+        }catch(IOException e){
+              textView5.setText("IOException 発生");
+        }
+labe: 
          
         Log.v("----------", "----------");
         Log.v("Latitude", String.valueOf(location.getLatitude()));
