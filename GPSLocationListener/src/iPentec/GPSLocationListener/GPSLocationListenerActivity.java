@@ -7,7 +7,7 @@ import android.content.*;
 import android.util.Log;
 import android.widget.TextView;
 
-
+// add tentative comments here
 
 public class GPSLocationListenerActivity extends Activity implements LocationListener {
     LocationManager locman;
