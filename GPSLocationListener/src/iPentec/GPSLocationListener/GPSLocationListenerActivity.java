@@ -4,11 +4,15 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
 import android.location.*;
 import android.content.*;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.SearchView;
 import android.widget.TextView;
 
 // add tentative comments here
@@ -22,7 +26,45 @@ public class GPSLocationListenerActivity extends Activity implements LocationLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gpslocation_listener);
         locman = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-   }
+        Button button = (Button) findViewById(R.id.button1);
+        final GPSLocationListenerActivity gpsla = this;
+        button.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("NewApi")
+			public void onClick(View v) {
+                // Do something in response to button click
+                TextView textView5 = (TextView)findViewById(R.id.textView5);
+                Geocoder geocoder = new Geocoder( gpsla, Locale.getDefault());
+                
+                try{
+                	boolean b = false;
+                  List<Address> addressList = geocoder.getFromLocationName("東京都渋谷区神南２丁目２－１", 1);
+                  if (addressList.size() == 0) {
+                	  if (Geocoder.isPresent() == false)
+                	  {
+                		  textView5.setText("background service is not available!");
+                	  }
+                	  else
+                	  {
+                		  textView5.setText("見つかりませんでした");
+                	  }
+                	  b = true;
+                  }
+                  if (!b) {
+                	  Address address = addressList.get(0);
+         
+                	  double lat = address.getLatitude();
+                	  double lng = address.getLongitude();
+                	  String adr=Double.toString(lat)+","+Double.toString(lng);
+                	  textView5.setText(adr);
+                  }
+                }catch(IOException e){
+                      textView5.setText("IOException 発生");
+                }
+            }
+        });
+        SearchView sview = (SearchView) findViewById(R.id.searchView1);
+    
+    }
      
     @Override
     protected void onResume(){
@@ -41,36 +83,11 @@ public class GPSLocationListenerActivity extends Activity implements LocationLis
         super.onPause();
     }
     
-     
-    @Override
+   	@Override
     public void onLocationChanged(Location location){
         TextView textView1 = (TextView)findViewById(R.id.textView1);
         textView1.setText("Latitude:Longitude - "
         +String.valueOf(location.getLatitude()) +":"+String.valueOf(location.getLongitude()));
-         
-        TextView textView5 = (TextView)findViewById(R.id.textView5);
-                         
-        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-        
-        try{
-        	boolean b = false;
-          List<Address> addressList = geocoder.getFromLocationName("東京都渋谷区神南２丁目２－１", 1);
-          if (addressList.size() == 0) {
-        	  textView5.setText("見つかりませんでした");
-        	  b = true;
-          }
-          if (!b) {
-        	  Address address = addressList.get(0);
- 
-        	  double lat = address.getLatitude();
-        	  double lng = address.getLongitude();
-        	  String adr=Double.toString(lat)+","+Double.toString(lng);
-        	  textView5.setText(adr);
-          }
-        }catch(IOException e){
-              textView5.setText("IOException 発生");
-        }
-labe: 
          
         Log.v("----------", "----------");
         Log.v("Latitude", String.valueOf(location.getLatitude()));
