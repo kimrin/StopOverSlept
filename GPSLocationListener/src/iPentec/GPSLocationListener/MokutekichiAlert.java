@@ -6,8 +6,12 @@ import java.util.Locale;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.location.*;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
 import android.content.*;
 import android.util.Log;
 import android.view.View;
@@ -19,19 +23,25 @@ import android.widget.TextView;
 // add tentative comments here
 // add comments here
 
-public class GPSLocationListenerActivity extends Activity implements LocationListener,
+public class MokutekichiAlert extends Activity implements LocationListener,
     SearchView.OnQueryTextListener {
     LocationManager locman;
     
     double latiNow = 0.0;
     double longiNow = 0.0;
-    
+    Ringtone mRingtone;
+    boolean isRing = false;
+    boolean isEnableVibe = true;
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gpslocation_listener);
         locman = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        List<String> providers = locman.getAllProviders();
+        Log.v("Providers",providers.toString());
+        
         SearchView sview = (SearchView) findViewById(R.id.searchView1);
         // SearchViewの初期表示状態を設定
         sview.setIconifiedByDefault(false);
@@ -47,9 +57,33 @@ public class GPSLocationListenerActivity extends Activity implements LocationLis
 
         if (locman != null){
             locman.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000,5,this);
-     
         }
- 
+        Uri uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+        mRingtone = RingtoneManager.getRingtone(getApplicationContext(), uri);
+        final MokutekichiAlert gpsla = this;
+
+        Button button = (Button) findViewById(R.id.button1);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // Do something in response to button click
+                if (locman != null){
+                    locman.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000,5,gpsla);
+                }
+            	if (isRing == false)
+            	{
+                    gpsla.isEnableVibe = true;
+            		isRing = true;
+                    Log.v("ringing", "--- ringing ---");
+            		mRingtone.play();
+            	}
+            	else
+            	{
+            		isRing = false;
+                    Log.v("ringing", "--- off ringing ---");
+            		mRingtone.stop();
+            	}
+            }
+        });
     }
      
     @Override
@@ -72,8 +106,18 @@ public class GPSLocationListenerActivity extends Activity implements LocationLis
    	@Override
     public void onLocationChanged(Location location){
         TextView textView3 = (TextView)findViewById(R.id.textView3);
-        textView3.setText(""+ Double.toString(getDistance(location.getLatitude(), location.getLongitude(), this.latiNow, this.longiNow)).toString()+"Km");
-         
+        double distance = getDistance(location.getLatitude(), location.getLongitude(), this.latiNow, this.longiNow) / 1000.00;
+        
+        textView3.setText(((this.latiNow == 0.0) ? "Z ": "" )+ Double.toString(distance).toString()+"Km");
+        
+        if ((distance < 1.0)&&(this.isEnableVibe))
+        {
+            Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+            long[] pattern = {3000, 1000, 2000, 5000, 3000, 1000}; // OFF/ON/OFF/ON...
+            vibrator.vibrate(pattern, -1);
+            this.isEnableVibe = false;
+        }
+        
         Log.v("----------", "----------");
         Log.v("Latitude", String.valueOf(location.getLatitude()));
         Log.v("Longitude", String.valueOf(location.getLongitude()));
@@ -120,9 +164,11 @@ public class GPSLocationListenerActivity extends Activity implements LocationLis
 	@Override
 	public boolean onQueryTextSubmit(final String query) {
 		// TODO Auto-generated method stub
-        final GPSLocationListenerActivity gpsla = this;
+        final MokutekichiAlert gpsla = this;
         TextView textView5 = (TextView)findViewById(R.id.textView5);
         Geocoder geocoder = new Geocoder( gpsla, Locale.getDefault());
+        List<String> providers = locman.getProviders(true);
+        locman.requestLocationUpdates("network", 5000, 10, this);
                 
         try{
         	boolean b = false;
@@ -180,4 +226,11 @@ public class GPSLocationListenerActivity extends Activity implements LocationLis
 
 		return Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
 	}
+	@Override
+	  protected void onDestroy() {
+	    super.onDestroy();
+	    // 重要：requestLocationUpdatesしたままアプリを終了すると挙動がおかしくなる。
+	    locman.removeUpdates(this);
+	    //locman.removeGpsStatusListener(this);
+	  }
 }
