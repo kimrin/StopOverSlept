@@ -13,6 +13,7 @@ import android.location.*;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.content.*;
+import android.content.SharedPreferences.Editor;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -32,9 +33,11 @@ public class MokutekichiAlert extends Activity implements LocationListener,
     Ringtone mRingtone;
     boolean isRing = false;
     boolean isEnableVibe = true;
+    String  targetLocation = "";
 
     /** Called when the activity is first created. */
-    @Override
+    @SuppressLint({ "WorldReadableFiles", "WorldWriteableFiles" })
+	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gpslocation_listener);
@@ -54,6 +57,14 @@ public class MokutekichiAlert extends Activity implements LocationListener,
  
         // SearchViewに何も入力していない時のテキストを設定
         sview.setQueryHint("検索文字を入力して下さい。");
+
+    	SharedPreferences pref =
+    			getSharedPreferences("pref",MODE_WORLD_READABLE|MODE_WORLD_WRITEABLE);
+    	String str = pref.getString("target","");
+    	Log.v("SAVE",str);
+    	if (! str.equals("")) {
+    		sview.setQuery(str,true);
+    	}
 
         if (locman != null){
             locman.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000,5,this);
@@ -88,20 +99,39 @@ public class MokutekichiAlert extends Activity implements LocationListener,
      
     @Override
     protected void onResume(){
+        super.onResume();
         if (locman != null){
             locman.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,0,this);
      
         }
-        super.onResume();
     }
      
-    @Override
+    @SuppressLint({ "WorldReadableFiles", "WorldWriteableFiles" })
+	@Override
     protected void onPause(){
+        super.onPause();
         if (locman != null){
             locman.removeUpdates(this);
         }
-        super.onPause();
+        SharedPreferences pref =
+        		getSharedPreferences("pref",MODE_WORLD_READABLE|MODE_WORLD_WRITEABLE);
+        Editor e = pref.edit();
+        e.putString("target", this.targetLocation);
+        e.commit();
+        Log.v("SAVE","SAVE "+this.targetLocation);
     }
+    
+    @SuppressLint({ "WorldReadableFiles", "WorldWriteableFiles" })
+	@Override
+    protected void onRestart() {
+    	super.onRestart();
+    	SharedPreferences pref =
+    			getSharedPreferences("pref",MODE_WORLD_READABLE|MODE_WORLD_WRITEABLE);
+    	String str = pref.getString("target","");
+    	Log.v("SAVE",str);
+    	this.onQueryTextChange(str);
+    }
+    
     
    	@Override
     public void onLocationChanged(Location location){
@@ -165,9 +195,12 @@ public class MokutekichiAlert extends Activity implements LocationListener,
 	public boolean onQueryTextSubmit(final String query) {
 		// TODO Auto-generated method stub
         final MokutekichiAlert gpsla = this;
+        
+        this.targetLocation = String.copyValueOf(query.toCharArray());
+        
         TextView textView5 = (TextView)findViewById(R.id.textView5);
         Geocoder geocoder = new Geocoder( gpsla, Locale.getDefault());
-        List<String> providers = locman.getProviders(true);
+        //List<String> providers = locman.getProviders(true);
         locman.requestLocationUpdates("network", 5000, 10, this);
                 
         try{
