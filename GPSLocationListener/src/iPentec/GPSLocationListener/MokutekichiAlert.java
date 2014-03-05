@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.location.*;
+import android.media.MediaPlayer;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.content.*;
@@ -38,6 +39,7 @@ public class MokutekichiAlert extends Activity implements LocationListener,
     boolean isEnableVibe = true;
     String  targetLocation = "";
     double  okiro_km = 1.0;
+    MediaPlayer mp;
     
     /** Called when the activity is first created. */
     @SuppressLint({ "WorldReadableFiles", "WorldWriteableFiles" })
@@ -91,6 +93,9 @@ public class MokutekichiAlert extends Activity implements LocationListener,
             		isRing = true;
                     button.setText("リセット！");
                     Log.v("Button", "On");
+                    if (mp.isPlaying()) {
+                    	mp.stop();
+                    }
             		//mRingtone.play();
             	}
             	else
@@ -129,7 +134,7 @@ public class MokutekichiAlert extends Activity implements LocationListener,
 				
 			}
         });
-
+        this.mp = MediaPlayer.create(this, R.raw.morning);
     }
      
     @Override
@@ -194,9 +199,10 @@ public class MokutekichiAlert extends Activity implements LocationListener,
 	 * 
 	 */
 	public void ringSoundAndVibe() {
+        mp.start();
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        long[] pattern = {1000, 2500, 1000, 2500, 1000, 2500}; // OFF/ON/OFF/ON...
-        vibrator.vibrate(pattern, 5);
+        long[] pattern = {1000,2500,1000,2500,1000,2500}; // OFF/ON/OFF/ON...
+        vibrator.vibrate(pattern, 0);
         this.isEnableVibe = false;
 	}
      
