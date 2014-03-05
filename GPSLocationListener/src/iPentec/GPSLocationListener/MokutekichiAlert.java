@@ -16,9 +16,12 @@ import android.content.*;
 import android.content.SharedPreferences.Editor;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.SearchView;
 import android.widget.SearchView.OnQueryTextListener;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 // add tentative comments here
@@ -34,7 +37,8 @@ public class MokutekichiAlert extends Activity implements LocationListener,
     boolean isRing = false;
     boolean isEnableVibe = true;
     String  targetLocation = "";
-
+    double  okiro_km = 1.0;
+    
     /** Called when the activity is first created. */
     @SuppressLint({ "WorldReadableFiles", "WorldWriteableFiles" })
 	@Override
@@ -73,7 +77,8 @@ public class MokutekichiAlert extends Activity implements LocationListener,
         mRingtone = RingtoneManager.getRingtone(getApplicationContext(), uri);
         final MokutekichiAlert gpsla = this;
 
-        Button button = (Button) findViewById(R.id.button1);
+        final Button button = (Button) findViewById(R.id.button1);
+        button.setText("ストップ！");
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // Do something in response to button click
@@ -82,19 +87,49 @@ public class MokutekichiAlert extends Activity implements LocationListener,
                 }
             	if (isRing == false)
             	{
-                    gpsla.isEnableVibe = true;
+                    gpsla.isEnableVibe = false;
             		isRing = true;
-                    Log.v("ringing", "--- ringing ---");
-            		mRingtone.play();
+                    button.setText("リセット！");
+                    Log.v("Button", "On");
+            		//mRingtone.play();
             	}
             	else
             	{
             		isRing = false;
-                    Log.v("ringing", "--- off ringing ---");
-            		mRingtone.stop();
+            		gpsla.isEnableVibe = true;
+                    button.setText("ストップ");
+                    Log.v("Button", "Off");
+            		//mRingtone.stop();
             	}
             }
         });
+        
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+         // アイテムを追加します
+        adapter.add("0.5");
+        adapter.add("1.0");
+        adapter.add("2.0");
+        Spinner spinner1 = (Spinner) findViewById(R.id.spinner1);
+        // アダプターを設定します
+        spinner1.setAdapter(adapter);
+        // リストビューのアイテムがクリックされた時に呼び出されるコールバックリスナーを登録します
+        spinner1.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                    int position, long id) {
+                 Spinner sp = (Spinner) parent;
+                 String item = (String) sp.getSelectedItem();
+                gpsla.okiro_km = Double.parseDouble(item);
+            }
+
+			@Override
+			public void onNothingSelected(AdapterView<?> arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+        });
+
     }
      
     @Override
@@ -140,12 +175,9 @@ public class MokutekichiAlert extends Activity implements LocationListener,
         
         textView3.setText(((this.latiNow == 0.0) ? "Z ": "" )+ Double.toString(distance).toString()+"Km");
         
-        if ((distance < 1.0)&&(this.isEnableVibe))
+        if ((distance < okiro_km)&&(this.isEnableVibe))
         {
-            Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-            long[] pattern = {3000, 1000, 2000, 5000, 3000, 1000}; // OFF/ON/OFF/ON...
-            vibrator.vibrate(pattern, -1);
-            this.isEnableVibe = false;
+			ringSoundAndVibe();
         }
         
         Log.v("----------", "----------");
@@ -157,6 +189,16 @@ public class MokutekichiAlert extends Activity implements LocationListener,
         Log.v("Speed", String.valueOf(location.getSpeed())); 
         Log.v("Bearing", String.valueOf(location.getBearing()));
     }
+
+	/**
+	 * 
+	 */
+	public void ringSoundAndVibe() {
+        Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        long[] pattern = {1000, 2500, 1000, 2500, 1000, 2500}; // OFF/ON/OFF/ON...
+        vibrator.vibrate(pattern, 5);
+        this.isEnableVibe = false;
+	}
      
     @Override
     public void onProviderDisabled(String provider){
