@@ -4,8 +4,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+import com.google.android.gms.maps.MapFragment;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.FragmentTransaction;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -135,6 +138,10 @@ public class MokutekichiAlert extends Activity implements LocationListener,
 			}
         });
         this.mp = MediaPlayer.create(this, R.raw.morning);
+//        MapFragment mMapFragment = MapFragment.newInstance();
+//        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+//        fragmentTransaction.add(R.id.view1, mMapFragment);
+//        fragmentTransaction.commit();
     }
      
     @Override
